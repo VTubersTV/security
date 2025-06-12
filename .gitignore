@@ -1,0 +1,35 @@
+# Advisory content (gitignored for security)
+www/src/content/advisories/*
+
+# Build artifacts
+www/dist/
+www/.astro/
+www/.output/
+
+# Dependencies
+www/node_modules/
+www/.pnpm-store/
+
+# Logs
+www/*.log
+www/npm-debug.log*
+www/yarn-debug.log*
+www/yarn-error.log*
+www/pnpm-debug.log*
+
+# Environment and secrets
+www/.env*
+www/.env.*
+www/.secret*
+
+# OS and editor files
+www/.DS_Store
+www/.idea/
+www/.vscode/
+www/*.swp
+www/*.swo
+www/.cache/
+
+# Test coverage
+www/coverage/
+www/.nyc_output/
