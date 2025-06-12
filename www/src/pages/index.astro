@@ -1,0 +1,180 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+
+interface AdvisoryData {
+	status: string;
+	severity: string;
+	title: string;
+	description: string;
+	dates: {
+		published: Date;
+	};
+}
+
+// Get all published advisories
+const advisories = await getCollection('advisories', ({ data }: { data: AdvisoryData }) => {
+	return data.status === 'published';
+});
+
+// Sort advisories by date, newest first
+const sortedAdvisories = advisories.sort((a: CollectionEntry<'advisories'>, b: CollectionEntry<'advisories'>) => 
+	b.data.dates.published.getTime() - a.data.dates.published.getTime()
+);
+---
+
+<Layout title="VTubers.TV Security" description="Security advisories and information for VTubers.TV">
+
+	<!-- Hero Section -->
+	<section class="hero py-5 bg-light">
+		<div class="container text-center py-5">
+			<h1 class="display-4 fw-bold mb-3">VTubers.TV Security</h1>
+			<p class="lead text-muted">Protecting our community through responsible security practices</p>
+		</div>
+	</section>
+
+	<!-- Advisories Section -->
+	<section id="advisories" class="py-5">
+		<div class="container">
+			<h2 class="text-center mb-4">Security Advisories</h2>
+			<div class="row justify-content-center mb-4">
+				<div class="col-md-4">
+					<select class="form-select" id="severity-filter">
+						<option value="all">All Severities</option>
+						<option value="critical">Critical</option>
+						<option value="high">High</option>
+						<option value="moderate">Moderate</option>
+						<option value="low">Low</option>
+					</select>
+				</div>
+			</div>
+			<div class="row g-4" id="advisories-list">
+				{sortedAdvisories.map((advisory: CollectionEntry<'advisories'>) => (
+					<div class="col-md-6 col-lg-4">
+						<div class="card h-100 shadow-sm">
+							<div class="card-body">
+								<span class={`badge severity-${advisory.data.severity} mb-2`}>
+									{advisory.data.severity.toUpperCase()}
+								</span>
+								<h3 class="card-title h5 mb-2">{advisory.data.title}</h3>
+								<p class="card-text text-muted small mb-3">{advisory.data.description}</p>
+								<div class="d-flex justify-content-between align-items-center">
+									<small class="text-muted">
+										{new Date(advisory.data.dates.published).toLocaleDateString()}
+									</small>
+									<a href={`/advisories/${advisory.slug}`} class="btn btn-sm btn-outline-primary">
+										Read More
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				))}
+			</div>
+		</div>
+	</section>
+
+	<!-- Policy Section -->
+	<section id="policy" class="py-5 bg-light">
+		<div class="container">
+			<h2 class="text-center mb-4">Security Policy</h2>
+			<div class="row g-4">
+				<div class="col-md-6">
+					<div class="card h-100 shadow-sm">
+						<div class="card-body">
+							<h3 class="card-title h4 mb-3">Responsible Disclosure</h3>
+							<p class="card-text">We take security seriously and encourage responsible disclosure of vulnerabilities. Please do not report security issues through public channels.</p>
+							<ul class="list-unstyled">
+								<li class="mb-2">
+									<i class="bi bi-envelope me-2"></i>
+									<a href="mailto:security@vtubers.tv">security@vtubers.tv</a>
+								</li>
+								<li>
+									<i class="bi bi-discord me-2"></i>
+									<a href="https://vtubers.tv/discord" target="_blank">Join our Discord</a>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-6">
+					<div class="card h-100 shadow-sm">
+						<div class="card-body">
+							<h3 class="card-title h4 mb-3">Disclosure Process</h3>
+							<ol class="mb-0">
+								<li class="mb-2">Report the vulnerability</li>
+								<li class="mb-2">We acknowledge within 48 hours</li>
+								<li class="mb-2">Investigation and confirmation</li>
+								<li class="mb-2">Fix development</li>
+								<li>Security advisory publication</li>
+							</ol>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Contact Section -->
+	<section id="contact" class="py-5">
+		<div class="container">
+			<h2 class="text-center mb-4">Security Team</h2>
+			<div class="row g-4">
+				<div class="col-md-4">
+					<div class="card h-100 shadow-sm text-center">
+						<div class="card-body">
+							<h3 class="card-title h5 mb-2">Security Team</h3>
+							<a href="mailto:security@vtubers.tv" class="text-decoration-none">security@vtubers.tv</a>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-4">
+					<div class="card h-100 shadow-sm text-center">
+						<div class="card-body">
+							<h3 class="card-title h5 mb-2">Selina</h3>
+							<a href="mailto:selina@vtubers.tv" class="text-decoration-none">selina@vtubers.tv</a>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-4">
+					<div class="card h-100 shadow-sm text-center">
+						<div class="card-body">
+							<h3 class="card-title h5 mb-2">Lmay</h3>
+							<a href="mailto:lmay@vtubers.tv" class="text-decoration-none">lmay@vtubers.tv</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<script>
+		// Severity filter functionality
+		document.addEventListener('DOMContentLoaded', () => {
+			const severityFilter = document.getElementById('severity-filter') as HTMLSelectElement;
+			const advisoriesList = document.getElementById('advisories-list');
+	
+			if (!severityFilter || !advisoriesList) return;
+	
+			severityFilter.addEventListener('change', (e: Event) => {
+				const target = e.target as HTMLSelectElement;
+				const selectedSeverity = target.value;
+				const advisoryCards = advisoriesList.getElementsByClassName('col-md-6');
+	
+				Array.from(advisoryCards).forEach(card => {
+					const badge = card.querySelector('.badge');
+					if (!badge) return;
+					
+					const severity = badge.classList[1].replace('severity-', '');
+					(card as HTMLElement).style.display = 
+						selectedSeverity === 'all' || severity === selectedSeverity ? '' : 'none';
+				});
+			});
+		});
+	</script>
+	
+</Layout>
+
+
+

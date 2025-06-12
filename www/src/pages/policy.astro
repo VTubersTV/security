@@ -1,0 +1,320 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout 
+	title="Security Policy - VTubers.TV Security" 
+	description="Learn about VTubers.TV's security policy, responsible disclosure process, and how to report vulnerabilities."
+>
+	<div class="container py-5">
+		<!-- Hero Section -->
+		<section class="text-center mb-5">
+			<h1 class="display-4 fw-bold mb-3">Security Policy</h1>
+			<p class="lead text-muted col-lg-8 mx-auto">
+				We take security seriously at VTubers.TV. Our commitment to security is reflected in our responsible disclosure policy and transparent security practices.
+			</p>
+		</section>
+
+		<!-- Main Content -->
+		<div class="row g-4">
+			<!-- Reporting Vulnerabilities -->
+			<div class="col-lg-8">
+				<div class="card border-0 shadow-sm mb-4">
+					<div class="card-body p-4">
+						<div class="d-flex align-items-center mb-4">
+							<div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+								<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="text-primary" viewBox="0 0 16 16">
+									<path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zM4.5 7.5a.5.5 0 0 1 0 1H3.25a.25.25 0 0 1-.25-.25V6.75a.25.25 0 0 1 .25-.25H4.5a.5.5 0 0 1 0 1H3.5v1h1a.5.5 0 0 1 0 1zm3.5 0a.5.5 0 0 1 0 1H7.5v1h.5a.5.5 0 0 1 0 1H6.75a.25.25 0 0 1-.25-.25V6.75a.25.25 0 0 1 .25-.25H8a.5.5 0 0 1 0 1zm3.5 0a.5.5 0 0 1 0 1h-1v1h1a.5.5 0 0 1 0 1h-1.25a.25.25 0 0 1-.25-.25V6.75a.25.25 0 0 1 .25-.25H11.5a.5.5 0 0 1 0 1z"/>
+								</svg>
+							</div>
+							<h2 class="h3 mb-0">Reporting a Vulnerability</h2>
+						</div>
+						<div class="alert alert-warning mb-4">
+							<strong>Important:</strong> Please do not report security vulnerabilities through public GitHub issues.
+						</div>
+						<p class="mb-4">
+							If you believe you have found a security vulnerability, please report it to us through our 
+							<a href="https://github.com/VTubersTV/security/security/advisories/new" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
+								GitHub Security Advisory
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="ms-1" viewBox="0 0 16 16">
+									<path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
+									<path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
+								</svg>
+							</a>.
+						</p>
+						<div class="bg-light p-4 rounded">
+							<h3 class="h5 mb-3">What to Expect</h3>
+							<ul class="list-unstyled mb-0">
+								<li class="d-flex mb-3">
+									<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="text-success me-2" viewBox="0 0 16 16">
+										<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+									</svg>
+									<span>Response within 48 hours</span>
+								</li>
+								<li class="d-flex mb-3">
+									<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="text-success me-2" viewBox="0 0 16 16">
+										<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+									</svg>
+									<span>Confirmation of the issue</span>
+								</li>
+								<li class="d-flex">
+									<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="text-success me-2" viewBox="0 0 16 16">
+										<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+									</svg>
+									<span>Timely patch release</span>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+
+				<!-- Security Update Process -->
+				<div class="card border-0 shadow-sm mb-4">
+					<div class="card-body p-4">
+						<h2 class="h3 mb-4">Security Update Process</h2>
+						<div class="timeline">
+							<div class="timeline-item">
+								<div class="timeline-marker"></div>
+								<div class="timeline-content">
+									<h3 class="h5 mb-2">1. Report Submission</h3>
+									<p class="text-muted mb-0">Security vulnerabilities are reported through GitHub Security Advisories</p>
+								</div>
+							</div>
+							<div class="timeline-item">
+								<div class="timeline-marker"></div>
+								<div class="timeline-content">
+									<h3 class="h5 mb-2">2. Review & Validation</h3>
+									<p class="text-muted mb-0">Our security team reviews and validates the report</p>
+								</div>
+							</div>
+							<div class="timeline-item">
+								<div class="timeline-marker"></div>
+								<div class="timeline-content">
+									<h3 class="h5 mb-2">3. Advisory Creation</h3>
+									<p class="text-muted mb-0">If confirmed, we create a security advisory</p>
+								</div>
+							</div>
+							<div class="timeline-item">
+								<div class="timeline-marker"></div>
+								<div class="timeline-content">
+									<h3 class="h5 mb-2">4. Fix Development</h3>
+									<p class="text-muted mb-0">We work on a fix and release a patch</p>
+								</div>
+							</div>
+							<div class="timeline-item">
+								<div class="timeline-marker"></div>
+								<div class="timeline-content">
+									<h3 class="h5 mb-2">5. Advisory Publication</h3>
+									<p class="text-muted mb-0">The security advisory is published with the fix</p>
+								</div>
+							</div>
+							<div class="timeline-item">
+								<div class="timeline-marker"></div>
+								<div class="timeline-content">
+									<h3 class="h5 mb-2">6. User Notification</h3>
+									<p class="text-muted mb-0">Users are notified through GitHub's security alert system</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Security Advisories -->
+				<div class="card border-0 shadow-sm">
+					<div class="card-body p-4">
+						<h2 class="h3 mb-4">Security Advisories</h2>
+						<p class="mb-4">Each security advisory includes comprehensive information about the vulnerability:</p>
+						<div class="row g-3">
+							<div class="col-md-6">
+								<div class="card bg-light h-100">
+									<div class="card-body">
+										<h3 class="h6 mb-3">Essential Information</h3>
+										<ul class="list-unstyled mb-0">
+											<li class="d-flex mb-2">
+												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="text-primary me-2" viewBox="0 0 16 16">
+													<path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 7.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5z"/>
+												</svg>
+												<span>Detailed vulnerability description</span>
+											</li>
+											<li class="d-flex mb-2">
+												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="text-primary me-2" viewBox="0 0 16 16">
+													<path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 7.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5z"/>
+												</svg>
+												<span>Affected versions</span>
+											</li>
+											<li class="d-flex">
+												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="text-primary me-2" viewBox="0 0 16 16">
+													<path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 7.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5z"/>
+												</svg>
+												<span>Steps to reproduce</span>
+											</li>
+										</ul>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="card bg-light h-100">
+									<div class="card-body">
+										<h3 class="h6 mb-3">Additional Details</h3>
+										<ul class="list-unstyled mb-0">
+											<li class="d-flex mb-2">
+												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="text-primary me-2" viewBox="0 0 16 16">
+													<path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 7.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5z"/>
+												</svg>
+												<span>Impact assessment</span>
+											</li>
+											<li class="d-flex mb-2">
+												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="text-primary me-2" viewBox="0 0 16 16">
+													<path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 7.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5z"/>
+												</svg>
+												<span>Mitigation steps</span>
+											</li>
+											<li class="d-flex">
+												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="text-primary me-2" viewBox="0 0 16 16">
+													<path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 7.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5z"/>
+												</svg>
+												<span>Patch information</span>
+											</li>
+										</ul>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Sidebar -->
+			<div class="col-lg-4">
+				<!-- Contact Card -->
+				<div class="card border-0 shadow-sm mb-4">
+					<div class="card-body p-4">
+						<h2 class="h4 mb-4">Security Team</h2>
+						<div class="d-grid gap-3">
+							<a href="mailto:security@vtubers.tv" class="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2">
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+									<path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z"/>
+								</svg>
+								Security Team
+							</a>
+							<a href="mailto:selina@vtubers.tv" class="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2">
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+									<path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z"/>
+								</svg>
+								Selina
+							</a>
+							<a href="mailto:lmay@vtubers.tv" class="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2">
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+									<path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z"/>
+								</svg>
+								Lmay
+							</a>
+						</div>
+					</div>
+				</div>
+
+				<!-- Quick Links -->
+				<div class="card border-0 shadow-sm">
+					<div class="card-body p-4">
+						<h2 class="h4 mb-4">Quick Links</h2>
+						<div class="d-grid gap-2">
+							<a href="/advisories" class="btn btn-primary d-flex align-items-center justify-content-center gap-2">
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+									<path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+									<path d="M6.854 4.646a.5.5 0 0 1 0 .708L4.207 8l2.647 2.646a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 0 1 .708 0zm2.292 0a.5.5 0 0 0 0 .708L11.793 8l-2.647 2.646a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708 0z"/>
+								</svg>
+								View Advisories
+							</a>
+							<a href="https://github.com/VTubersTV/security/security/advisories/new" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary d-flex align-items-center justify-content-center gap-2">
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+									<path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zM4.5 7.5a.5.5 0 0 1 0 1H3.25a.25.25 0 0 1-.25-.25V6.75a.25.25 0 0 1 .25-.25H4.5a.5.5 0 0 1 0 1H3.5v1h1a.5.5 0 0 1 0 1zm3.5 0a.5.5 0 0 1 0 1H7.5v1h.5a.5.5 0 0 1 0 1H6.75a.25.25 0 0 1-.25-.25V6.75a.25.25 0 0 1 .25-.25H8a.5.5 0 0 1 0 1zm3.5 0a.5.5 0 0 1 0 1h-1v1h1a.5.5 0 0 1 0 1h-1.25a.25.25 0 0 1-.25-.25V6.75a.25.25 0 0 1 .25-.25H11.5a.5.5 0 0 1 0 1z"/>
+								</svg>
+								Report Vulnerability
+							</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</Layout>
+
+<style>
+	/* Timeline Styles */
+	.timeline {
+		position: relative;
+		padding-left: 2rem;
+	}
+
+	.timeline::before {
+		content: '';
+		position: absolute;
+		left: 0.5rem;
+		top: 0;
+		bottom: 0;
+		width: 2px;
+		background-color: #e5e7eb;
+	}
+
+	.timeline-item {
+		position: relative;
+		padding-bottom: 2rem;
+	}
+
+	.timeline-item:last-child {
+		padding-bottom: 0;
+	}
+
+	.timeline-marker {
+		position: absolute;
+		left: -2rem;
+		width: 1rem;
+		height: 1rem;
+		border-radius: 50%;
+		background-color: #3b82f6;
+		border: 2px solid white;
+		box-shadow: 0 0 0 2px #3b82f6;
+	}
+
+	/* Card Hover Effects */
+	.card {
+		transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+	}
+
+	.card:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06) !important;
+	}
+
+	/* Button Hover Effects */
+	.btn {
+		transition: all 0.2s ease-in-out;
+	}
+
+	.btn:hover {
+		transform: translateY(-1px);
+	}
+
+	/* Accessibility */
+	.btn:focus,
+	.card:focus-within {
+		outline: 2px solid #3b82f6;
+		outline-offset: 2px;
+	}
+
+	.btn:focus:not(:focus-visible),
+	.card:focus-within:not(:focus-visible) {
+		outline: none;
+	}
+
+	/* Mobile Responsiveness */
+	@media (max-width: 768px) {
+		.timeline {
+			padding-left: 1.5rem;
+		}
+
+		.timeline-marker {
+			left: -1.5rem;
+		}
+	}
+</style> 

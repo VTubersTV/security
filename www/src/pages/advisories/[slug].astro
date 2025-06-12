@@ -1,0 +1,558 @@
+---
+import { getCollection, getEntry } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import { formatDistanceToNow } from 'date-fns';
+import { cveVector } from '../../lib/parsers';
+
+export async function getStaticPaths() {
+	const advisories = await getCollection('advisories');
+	return advisories.map(advisory => ({
+		params: { slug: advisory.slug },
+		props: advisory,
+	}));
+}
+
+const { slug } = Astro.params;
+const advisory = Astro.props as CollectionEntry<'advisories'>;
+
+// Get related advisories (same severity, excluding current)
+const relatedAdvisories = await getCollection('advisories', ({ data, slug: advisorySlug }) => {
+	return data.severity === advisory.data.severity && advisorySlug !== slug;
+});
+
+// Format dates
+const publishedDate = new Date(advisory.data.dates.published);
+const updatedDate = new Date(advisory.data.dates.updated);
+const formattedPublishedDate = publishedDate.toLocaleDateString('en-US', {
+	year: 'numeric',
+	month: 'long',
+	day: 'numeric',
+});
+const formattedUpdatedDate = updatedDate.toLocaleDateString('en-US', {
+	year: 'numeric',
+	month: 'long',
+	day: 'numeric',
+});
+const timeAgo = formatDistanceToNow(updatedDate, { addSuffix: true });
+
+// Format CVSS score
+const cvssScore = advisory.data.cvss_score ? Number(advisory.data.cvss_score.toFixed(1)) : null;
+const cvssSeverity = cvssScore !== null ? 
+	(cvssScore >= 9.0 ? 'critical' : 
+	 cvssScore >= 7.0 ? 'high' : 
+	 cvssScore >= 4.0 ? 'medium' : 'low') : null;
+
+// Generate table of contents from headings
+const { Content } = await advisory.render();
+const headings = advisory.body.match(/^#{2,3}\s.+$/gm) || [];
+const toc = headings.map(heading => ({
+	text: heading.replace(/^#{2,3}\s/, ''),
+	level: heading.startsWith('###') ? 3 : 2,
+	id: heading.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}));
+
+const cvssVector = cveVector(advisory.data.cvss_vector ?? '');
+---
+
+<Layout 
+	title={`${advisory.data.title} - VTubers.TV Security`}
+	description={advisory.data.description}
+	type="article"
+	publishedDate={publishedDate}
+	modifiedDate={updatedDate}
+>
+	<article class="container py-5">
+		<div class="row">
+			<!-- Table of Contents -->
+			<div class="col-lg-3 d-none d-lg-block">
+				<div class="sticky-top pt-5" style="top: 2rem;">
+					<div class="card">
+						<div class="card-body">
+							<h2 class="h6 mb-3">Table of Contents</h2>
+							<nav aria-label="Table of contents">
+								<ul class="nav flex-column">
+									{toc.map(item => (
+										<li class="nav-item">
+											<a 
+												href={`#${item.id}`}
+												class={`nav-link py-1 ${item.level === 3 ? 'ps-3' : ''}`}
+												style="font-size: 0.9rem;"
+											>
+												{item.text}
+											</a>
+										</li>
+									))}
+								</ul>
+							</nav>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Main Content -->
+			<div class="col-lg-9">
+				<!-- Advisory Header -->
+				<header class="mb-5">
+					<div class="d-flex justify-content-between align-items-start mb-3">
+						<div class="d-flex gap-2 align-items-center">
+							<span class={`badge severity-${advisory.data.severity} fs-6 px-3 py-2`}>
+								{advisory.data.severity.toUpperCase()}
+							</span>
+							{cvssScore && (
+								<span class={`badge cvss-${cvssSeverity} fs-6 px-3 py-2`}>
+									CVSS: {cvssScore}
+								</span>
+							)}
+						</div>
+						<div class="text-end">
+							<small class="text-muted d-block">Published: {formattedPublishedDate}</small>
+							<small class="text-muted d-block">Updated: {formattedUpdatedDate} ({timeAgo})</small>
+						</div>
+					</div>
+					<h1 class="display-5 mb-3">{advisory.data.title}</h1>
+					<p class="lead text-muted mb-4">{advisory.data.description}</p>
+					
+					<!-- Identifiers -->
+					<div class="d-flex flex-wrap gap-3 mb-4">
+						{advisory.data.identifiers.ghsa && (
+							<a 
+								href={`https://github.com/VTubersTV/security/security/advisories/${advisory.data.identifiers.ghsa}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
+							>
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+									<path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+								</svg>
+								GHSA: {advisory.data.identifiers.ghsa}
+							</a>
+						)}
+						{advisory.data.identifiers.cve && (
+							<a 
+								href={`https://nvd.nist.gov/vuln/detail/${advisory.data.identifiers.cve}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
+							>
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+									<path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zM4.5 7.5a.5.5 0 0 1 0 1H3.25a.25.25 0 0 1-.25-.25V6.75a.25.25 0 0 1 .25-.25H4.5a.5.5 0 0 1 0 1H3.5v1h1a.5.5 0 0 1 0 1zm3.5 0a.5.5 0 0 1 0 1H7.5v1h.5a.5.5 0 0 1 0 1H6.75a.25.25 0 0 1-.25-.25V6.75a.25.25 0 0 1 .25-.25H8a.5.5 0 0 1 0 1zm3.5 0a.5.5 0 0 1 0 1h-1v1h1a.5.5 0 0 1 0 1h-1.25a.25.25 0 0 1-.25-.25V6.75a.25.25 0 0 1 .25-.25H11.5a.5.5 0 0 1 0 1zm-7 3a.5.5 0 0 1 0 1H3.25a.25.25 0 0 1-.25-.25v-1.5a.25.25 0 0 1 .25-.25H4.5a.5.5 0 0 1 0 1H3.5v.5h1a.5.5 0 0 1 0 1zm3.5 0a.5.5 0 0 1 0 1H7.5v.5h.5a.5.5 0 0 1 0 1H6.75a.25.25 0 0 1-.25-.25v-1.5a.25.25 0 0 1 .25-.25H8a.5.5 0 0 1 0 1zm3.5 0a.5.5 0 0 1 0 1h-1v.5h1a.5.5 0 0 1 0 1h-1.25a.25.25 0 0 1-.25-.25v-1.5a.25.25 0 0 1 .25-.25H11.5a.5.5 0 0 1 0 1z"/>
+								</svg>
+								CVE: {advisory.data.identifiers.cve}
+							</a>
+						)}
+					</div>
+
+					<!-- CVSS Score Card -->
+					{cvssScore !== null && cvssSeverity !== null && advisory.data.cvss_vector && (
+						<div class="card mb-4 border-0 bg-light">
+							<div class="card-body">
+								<div class="row">
+									<div class="col-md-4 text-center">
+										<div class="display-4 fw-bold mb-2">{cvssScore}</div>
+										<div class={`badge cvss-${cvssSeverity} px-3 py-2`}>
+											{cvssSeverity.toUpperCase()}
+										</div>
+									</div>
+									<div class="col-md-8">
+										<h2 class="h5 mb-3">CVSS Vector</h2>
+										<div class="mb-3">
+											<code class="bg-dark text-light px-2 py-1 rounded">
+												{advisory.data.cvss_vector}
+											</code>
+										</div>
+										<div class="row g-2">
+											<div class="col-md-6">
+												<dl class="row mb-0">
+													<dt class="col-sm-6">Attack Vector</dt>
+													<dd class="col-sm-6">{cvssVector.details.attackVector}</dd>
+
+													<dt class="col-sm-6">Attack Complexity</dt>
+													<dd class="col-sm-6">{cvssVector.details.attackComplexity}</dd>
+
+													<dt class="col-sm-6">Privileges Required</dt>
+													<dd class="col-sm-6">{cvssVector.details.privilegesRequired}</dd>
+
+													<dt class="col-sm-6">User Interaction</dt>
+													<dd class="col-sm-6">{cvssVector.details.userInteraction}</dd>
+												</dl>
+											</div>
+											<div class="col-md-6">
+												<dl class="row mb-0">
+													<dt class="col-sm-6">Scope</dt>
+													<dd class="col-sm-6">{cvssVector.details.scope}</dd>
+
+													<dt class="col-sm-6">Confidentiality</dt>
+													<dd class="col-sm-6">{cvssVector.details.confidentialityImpact}</dd>
+
+													<dt class="col-sm-6">Integrity</dt>
+													<dd class="col-sm-6">{cvssVector.details.integrityImpact}</dd>
+
+													<dt class="col-sm-6">Availability</dt>
+													<dd class="col-sm-6">{cvssVector.details.availabilityImpact}</dd>
+												</dl>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					)}
+
+					<!-- Timeline -->
+					<div class="card mb-4">
+						<div class="card-body">
+							<h2 class="h5 mb-3">Advisory Timeline</h2>
+							<div class="timeline">
+								<div class="timeline-item">
+									<div class="timeline-marker"></div>
+									<div class="timeline-content">
+										<h3 class="h6 mb-1">Published</h3>
+										<p class="text-muted mb-0">{formattedPublishedDate}</p>
+									</div>
+								</div>
+								<div class="timeline-item">
+									<div class="timeline-marker"></div>
+									<div class="timeline-content">
+										<h3 class="h6 mb-1">Last Updated</h3>
+										<p class="text-muted mb-0">{formattedUpdatedDate}</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</header>
+
+				<!-- Advisory Content -->
+				<div class="advisory-content mb-5">
+					<Content />
+				</div>
+
+				<!-- Package Information -->
+				<div class="card mb-5">
+					<div class="card-body">
+						<h2 class="h5 mb-3">Affected Package</h2>
+						<div class="row">
+							<div class="col-md-6">
+								<dl class="row mb-0">
+									<dt class="col-sm-4">Package Name</dt>
+									<dd class="col-sm-8">{advisory.data.package.name}</dd>
+
+									<dt class="col-sm-4">Ecosystem</dt>
+									<dd class="col-sm-8">
+										<span class="badge bg-secondary">
+											{advisory.data.package.ecosystem}
+										</span>
+									</dd>
+								</dl>
+							</div>
+							<div class="col-md-6">
+								<dl class="row mb-0">
+									<dt class="col-sm-4">Vulnerable Versions</dt>
+									<dd class="col-sm-8">
+										<code class="bg-danger bg-opacity-10 text-danger px-2 py-1 rounded">
+											{advisory.data.package.vulnerable_range}
+										</code>
+									</dd>
+
+									{advisory.data.package.fixed_version && (
+										<>
+											<dt class="col-sm-4">Fixed Version</dt>
+											<dd class="col-sm-8">
+												<code class="bg-success bg-opacity-10 text-success px-2 py-1 rounded">
+													{advisory.data.package.fixed_version}
+												</code>
+											</dd>
+										</>
+									)}
+								</dl>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- CWE IDs -->
+				{advisory.data.cwe_ids && advisory.data.cwe_ids.length > 0 && (
+					<div class="card mb-5">
+						<div class="card-body">
+							<h2 class="h5 mb-3">Common Weakness Enumeration (CWE)</h2>
+							<div class="row g-3">
+								{advisory.data.cwe_ids.map((cwe: { id: string; name: string }) => (
+									<div class="col-md-6">
+										<a 
+											href={`https://cwe.mitre.org/data/definitions/${cwe.id.replace('CWE-', '')}.html`}
+											target="_blank"
+											rel="noopener noreferrer"
+											class="card text-decoration-none h-100"
+										>
+											<div class="card-body">
+												<h3 class="h6 mb-2">{cwe.id}</h3>
+												<p class="text-muted mb-0 small">{cwe.name}</p>
+											</div>
+										</a>
+									</div>
+								))}
+							</div>
+						</div>
+					</div>
+				)}
+
+				<!-- Related Advisories -->
+				{relatedAdvisories.length > 0 && (
+					<div class="related-advisories">
+						<h2 class="h4 mb-4">Related Advisories</h2>
+						<div class="row g-4">
+							{relatedAdvisories.slice(0, 3).map(related => (
+								<div class="col-md-4">
+									<div class="card h-100">
+										<div class="card-body">
+											<div class="d-flex gap-2 mb-2">
+												<span class={`badge severity-${related.data.severity}`}>
+													{related.data.severity.toUpperCase()}
+												</span>
+												{related.data.cvss_score && (
+													<span class="badge bg-secondary">
+														CVSS: {related.data.cvss_score.toFixed(1)}
+													</span>
+												)}
+											</div>
+											<h3 class="card-title h6 mb-2">{related.data.title}</h3>
+											<p class="card-text small text-muted mb-3">
+												{related.data.description.slice(0, 100)}...
+											</p>
+											<a 
+												href={`/advisories/${related.slug}`}
+												class="stretched-link text-decoration-none"
+											>
+												Read More
+												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="ms-1" viewBox="0 0 16 16">
+													<path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+												</svg>
+											</a>
+										</div>
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+				)}
+			</div>
+		</div>
+	</article>
+</Layout>
+
+<style>
+	/* Severity Badges */
+	.badge.severity-critical {
+		background-color: #dc3545;
+		color: white;
+	}
+
+	.badge.severity-high {
+		background-color: #fd7e14;
+		color: white;
+	}
+
+	.badge.severity-moderate {
+		background-color: #ffc107;
+		color: black;
+	}
+
+	.badge.severity-low {
+		background-color: #20c997;
+		color: white;
+	}
+
+	/* CVSS Badges */
+	.badge.cvss-critical {
+		background-color: #dc3545;
+		color: white;
+	}
+
+	.badge.cvss-high {
+		background-color: #fd7e14;
+		color: white;
+	}
+
+	.badge.cvss-medium {
+		background-color: #ffc107;
+		color: black;
+	}
+
+	.badge.cvss-low {
+		background-color: #20c997;
+		color: white;
+	}
+
+	/* Timeline */
+	.timeline {
+		position: relative;
+		padding-left: 2rem;
+	}
+
+	.timeline::before {
+		content: '';
+		position: absolute;
+		left: 0.5rem;
+		top: 0;
+		bottom: 0;
+		width: 2px;
+		background-color: #e5e7eb;
+	}
+
+	.timeline-item {
+		position: relative;
+		padding-bottom: 1.5rem;
+	}
+
+	.timeline-item:last-child {
+		padding-bottom: 0;
+	}
+
+	.timeline-marker {
+		position: absolute;
+		left: -2rem;
+		width: 1rem;
+		height: 1rem;
+		border-radius: 50%;
+		background-color: #3b82f6;
+		border: 2px solid white;
+	}
+
+	/* Advisory Content */
+	.advisory-content {
+		font-size: 1.1rem;
+		line-height: 1.7;
+	}
+
+	.advisory-content h2 {
+		font-size: 1.75rem;
+		margin-top: 2rem;
+		margin-bottom: 1rem;
+		scroll-margin-top: 2rem;
+	}
+
+	.advisory-content h3 {
+		font-size: 1.5rem;
+		margin-top: 1.75rem;
+		margin-bottom: 0.75rem;
+		scroll-margin-top: 2rem;
+	}
+
+	.advisory-content p {
+		margin-bottom: 1.25rem;
+	}
+
+	.advisory-content ul, 
+	.advisory-content ol {
+		margin-bottom: 1.25rem;
+		padding-left: 1.5rem;
+	}
+
+	.advisory-content li {
+		margin-bottom: 0.5rem;
+	}
+
+	.advisory-content code {
+		background-color: #f8fafc;
+		padding: 0.2rem 0.4rem;
+		border-radius: 0.25rem;
+		font-size: 0.9em;
+	}
+
+	.advisory-content pre {
+		background-color: #f8fafc;
+		padding: 1rem;
+		border-radius: 0.5rem;
+		margin-bottom: 1.25rem;
+		overflow-x: auto;
+	}
+
+	.advisory-content pre code {
+		background-color: transparent;
+		padding: 0;
+	}
+
+	.advisory-content blockquote {
+		border-left: 4px solid #e5e7eb;
+		padding-left: 1rem;
+		margin-left: 0;
+		margin-bottom: 1.25rem;
+		color: #4b5563;
+	}
+
+	.advisory-content table {
+		width: 100%;
+		margin-bottom: 1.25rem;
+		border-collapse: collapse;
+	}
+
+	.advisory-content th,
+	.advisory-content td {
+		padding: 0.75rem;
+		border: 1px solid #e5e7eb;
+	}
+
+	.advisory-content th {
+		background-color: #f8fafc;
+		font-weight: 600;
+	}
+
+	/* Mobile Responsiveness */
+	@media (max-width: 768px) {
+		.advisory-content {
+			font-size: 1rem;
+		}
+
+		.advisory-content h2 {
+			font-size: 1.5rem;
+		}
+
+		.advisory-content h3 {
+			font-size: 1.25rem;
+		}
+
+		.timeline {
+			padding-left: 1.5rem;
+		}
+
+		.timeline-marker {
+			left: -1.5rem;
+		}
+	}
+
+	/* Accessibility */
+	.advisory-content a:focus,
+	.advisory-content button:focus {
+		outline: 2px solid #3b82f6;
+		outline-offset: 2px;
+	}
+
+	.advisory-content a:focus:not(:focus-visible),
+	.advisory-content button:focus:not(:focus-visible) {
+		outline: none;
+	}
+
+	/* Print Styles */
+	@media print {
+		.advisory-content {
+			font-size: 12pt;
+		}
+
+		.advisory-content a {
+			text-decoration: none;
+			color: black;
+		}
+
+		.advisory-content a[href]::after {
+			content: " (" attr(href) ")";
+			font-size: 90%;
+			color: #666;
+		}
+
+		.advisory-content pre {
+			white-space: pre-wrap;
+			border: 1px solid #ddd;
+		}
+	}
+</style> 

@@ -1,0 +1,486 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { z } from 'zod';
+
+// Define Zod schemas for our API responses
+const AdvisoryBaseSchema = z.object({
+	id: z.string(),
+	title: z.string(),
+	description: z.string(),
+	severity: z.enum(['critical', 'high', 'moderate', 'low']),
+	cvss_score: z.number().nullable(),
+	published: z.string(),
+	updated: z.string(),
+	package: z.object({
+		name: z.string(),
+		ecosystem: z.string(),
+		vulnerable_range: z.string(),
+		fixed_version: z.string().nullable()
+	})
+});
+
+const AdvisoryDetailSchema = AdvisoryBaseSchema.extend({
+	cvss_vector: z.string().nullable(),
+	identifiers: z.object({
+		ghsa: z.string().nullable(),
+		cve: z.string().nullable()
+	}),
+	cwe_ids: z.array(z.object({
+		id: z.string(),
+		name: z.string()
+	})).nullable(),
+	related: z.array(z.object({
+		id: z.string(),
+		title: z.string(),
+		severity: z.enum(['critical', 'high', 'moderate', 'low']),
+		published: z.string()
+	}))
+});
+
+const HealthResponseSchema = z.object({
+	status: z.literal('healthy'),
+	version: z.string(),
+	advisories: z.object({
+		total: z.number(),
+		bySeverity: z.object({
+			critical: z.number(),
+			high: z.number(),
+			moderate: z.number(),
+			low: z.number()
+		}),
+		lastUpdated: z.string()
+	})
+});
+
+const AdvisoryListResponseSchema = z.object({
+	severity: z.string(),
+	count: z.number(),
+	advisories: z.array(AdvisoryBaseSchema)
+});
+
+const SearchResponseSchema = z.object({
+	query: z.string(),
+	severity: z.string().nullable(),
+	ecosystem: z.string().nullable(),
+	total: z.number(),
+	limit: z.number(),
+	offset: z.number(),
+	advisories: z.array(AdvisoryBaseSchema)
+});
+
+// Example responses
+const exampleHealthResponse = {
+	status: 'healthy',
+	version: '1.0.0',
+	advisories: {
+		total: 42,
+		bySeverity: {
+			critical: 5,
+			high: 12,
+			moderate: 15,
+			low: 10
+		},
+		lastUpdated: '2024-03-20T12:00:00Z'
+	}
+};
+
+const exampleAdvisoryResponse = {
+	id: 'example-advisory',
+	title: 'Example Security Advisory',
+	description: 'This is an example security advisory',
+	severity: 'high',
+	cvss_score: 7.5,
+	cvss_vector: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H',
+	published: '2024-03-20T12:00:00Z',
+	updated: '2024-03-20T12:00:00Z',
+	identifiers: {
+		ghsa: 'GHSA-xxxx-xxxx-xxxx',
+		cve: 'CVE-2024-xxxx'
+	},
+	package: {
+		name: 'example-package',
+		ecosystem: 'npm',
+		vulnerable_range: '<1.2.3',
+		fixed_version: '1.2.3'
+	},
+	cwe_ids: [
+		{
+			id: 'CWE-79',
+			name: 'Cross-site Scripting (XSS)'
+		}
+	],
+	related: [
+		{
+			id: 'related-advisory',
+			title: 'Related Advisory',
+			severity: 'high',
+			published: '2024-03-19T12:00:00Z'
+		}
+	]
+};
+
+const currentUrl = Astro.url.toString().replace('/api', '');
+
+// Helper function to create human-readable schema documentation
+function createSchemaDocs(schema: z.ZodTypeAny): Record<string, any> {
+	if (schema instanceof z.ZodObject) {
+		const shape = schema.shape;
+		const docs: Record<string, any> = {};
+		
+		for (const [key, value] of Object.entries(shape)) {
+			if (value instanceof z.ZodObject) {
+				docs[key] = createSchemaDocs(value);
+			} else if (value instanceof z.ZodArray) {
+				docs[key] = {
+					type: 'array',
+					items: createSchemaDocs(value.element)
+				};
+			} else if (value instanceof z.ZodEnum) {
+				docs[key] = {
+					type: 'enum',
+					values: value.options
+				};
+			} else if (value instanceof z.ZodLiteral) {
+				docs[key] = {
+					type: 'literal',
+					value: value.value
+				};
+			} else if (value instanceof z.ZodNullable) {
+				docs[key] = {
+					type: 'nullable',
+					of: createSchemaDocs(value.unwrap())
+				};
+			} else {
+				docs[key] = {
+					type: value._def.typeName.toLowerCase().replace('zod', '')
+				};
+			}
+		}
+		return docs;
+	}
+	return { type: schema._def.typeName.toLowerCase().replace('zod', '') };
+}
+
+// Create human-readable schema documentation
+const schemaDocs = {
+	health: createSchemaDocs(HealthResponseSchema),
+	advisoryBase: createSchemaDocs(AdvisoryBaseSchema),
+	advisoryDetail: createSchemaDocs(AdvisoryDetailSchema),
+	advisoryList: createSchemaDocs(AdvisoryListResponseSchema),
+	search: createSchemaDocs(SearchResponseSchema)
+};
+
+// Helper function to format schema docs as markdown
+function formatSchemaDocs(docs: Record<string, any>, indent = 0): string {
+	const lines: string[] = [];
+	const padding = '  '.repeat(indent);
+
+	for (const [key, value] of Object.entries(docs)) {
+		if (typeof value === 'object' && value !== null) {
+			if (value.type === 'array') {
+				lines.push(`${padding}${key}: Array<`);
+				lines.push(formatSchemaDocs(value.items, indent + 1));
+				lines.push(`${padding}>`);
+			} else if (value.type === 'enum') {
+				lines.push(`${padding}${key}: Enum<${value.values.join(' | ')}>`);
+			} else if (value.type === 'literal') {
+				lines.push(`${padding}${key}: "${value.value}"`);
+			} else if (value.type === 'nullable') {
+				lines.push(`${padding}${key}: ${formatSchemaDocs(value.of, indent)} | null`);
+			} else {
+				lines.push(`${padding}${key}: {`);
+				lines.push(formatSchemaDocs(value, indent + 1));
+				lines.push(`${padding}}`);
+			}
+		} else {
+			lines.push(`${padding}${key}: ${value}`);
+		}
+	}
+
+	return lines.join('\n');
+}
+
+// Format all schemas
+const formattedSchemas = {
+	health: formatSchemaDocs(schemaDocs.health),
+	advisoryBase: formatSchemaDocs(schemaDocs.advisoryBase),
+	advisoryDetail: formatSchemaDocs(schemaDocs.advisoryDetail),
+	advisoryList: formatSchemaDocs(schemaDocs.advisoryList),
+	search: formatSchemaDocs(schemaDocs.search)
+};
+---
+
+<Layout 
+	title="API Documentation - VTubers.TV Security" 
+	description="Comprehensive API documentation for VTubers.TV Security Advisory System"
+>
+	<div class="container py-5">
+		<!-- Hero Section -->
+		<section class="text-center mb-5">
+			<h1 class="display-4 fw-bold mb-3">API Documentation</h1>
+			<p class="lead text-muted col-lg-8 mx-auto">
+				Comprehensive documentation for the VTubers.TV Security Advisory API. Use these endpoints to access and search security advisories programmatically.
+			</p>
+		</section>
+
+		<!-- API Overview -->
+		<section class="mb-5">
+			<div class="card border-0 shadow-sm">
+				<div class="card-body p-4">
+					<h2 class="h3 mb-4">API Overview</h2>
+					<div class="row g-4">
+						<div class="col-md-6">
+							<div class="card bg-light h-100">
+								<div class="card-body">
+									<h3 class="h5 mb-3">Base URL</h3>
+									<code class="bg-dark text-light px-3 py-2 rounded d-block">
+										{currentUrl}/api
+									</code>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="card bg-light h-100">
+								<div class="card-body">
+									<h3 class="h5 mb-3">Authentication</h3>
+									<p class="mb-0">Currently, the API is public and does not require authentication. Rate limiting may be applied in the future.</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Endpoints -->
+		<section class="mb-5">
+			<h2 class="h3 mb-4">Available Endpoints</h2>
+
+			<!-- Health Check -->
+			<div class="card border-0 shadow-sm mb-4">
+				<div class="card-body p-4">
+					<div class="d-flex align-items-center mb-4">
+						<span class="badge bg-success me-2">GET</span>
+						<code class="bg-light px-2 py-1 rounded">/api/health.json</code>
+					</div>
+					<h3 class="h5 mb-3">Health Check</h3>
+					<p class="mb-4">Returns the current health status of the advisory system, including counts of advisories by severity.</p>
+
+					<h4 class="h6 mb-3">Response Schema</h4>
+					<pre class="bg-light p-3 rounded mb-4"><code>{formattedSchemas.health}</code></pre>
+
+					<h4 class="h6 mb-3">Example Response</h4>
+					<pre class="bg-light p-3 rounded"><code>{JSON.stringify(exampleHealthResponse, null, 2)}</code></pre>
+				</div>
+			</div>
+
+			<!-- Get Advisories by Severity -->
+			<div class="card border-0 shadow-sm mb-4">
+				<div class="card-body p-4">
+					<div class="d-flex align-items-center mb-4">
+						<span class="badge bg-success me-2">GET</span>
+						<code class="bg-light px-2 py-1 rounded">/api/advisories/[severity].json</code>
+					</div>
+					<h3 class="h5 mb-3">Get Advisories by Severity</h3>
+					<p class="mb-4">Retrieve advisories filtered by severity level. Available severities: critical, high, moderate, low, all.</p>
+
+					<h4 class="h6 mb-3">Response Schema</h4>
+					<pre class="bg-light p-3 rounded mb-4"><code>{formattedSchemas.advisoryList}</code></pre>
+
+					<h4 class="h6 mb-3">Example Usage</h4>
+					<pre class="bg-light p-3 rounded mb-4"><code>curl {currentUrl}/api/advisories/high.json</code></pre>
+				</div>
+			</div>
+
+			<!-- Get Advisory by ID -->
+			<div class="card border-0 shadow-sm mb-4">
+				<div class="card-body p-4">
+					<div class="d-flex align-items-center mb-4">
+						<span class="badge bg-success me-2">GET</span>
+						<code class="bg-light px-2 py-1 rounded">/api/advisories/id/[id].json</code>
+					</div>
+					<h3 class="h5 mb-3">Get Advisory by ID</h3>
+					<p class="mb-4">Retrieve detailed information about a specific advisory, including related advisories of the same severity.</p>
+
+					<h4 class="h6 mb-3">Response Schema</h4>
+					<pre class="bg-light p-3 rounded mb-4"><code>{formattedSchemas.advisoryDetail}</code></pre>
+
+					<h4 class="h6 mb-3">Example Response</h4>
+					<pre class="bg-light p-3 rounded mb-4"><code>{JSON.stringify(exampleAdvisoryResponse, null, 2)}</code></pre>
+
+					<h4 class="h6 mb-3">Example Usage</h4>
+					<pre class="bg-light p-3 rounded"><code>curl {currentUrl}/api/advisories/id/example-advisory.json</code></pre>
+				</div>
+			</div>
+
+			<!-- Search Advisories -->
+			<div class="card border-0 shadow-sm">
+				<div class="card-body p-4">
+					<div class="d-flex align-items-center mb-4">
+						<span class="badge bg-success me-2">GET</span>
+						<code class="bg-light px-2 py-1 rounded">/api/advisories/search.json</code>
+					</div>
+					<h3 class="h5 mb-3">Search Advisories</h3>
+					<p class="mb-4">Search and filter advisories using various criteria. Supports pagination and multiple filter parameters.</p>
+
+					<h4 class="h6 mb-3">Query Parameters</h4>
+					<div class="table-responsive mb-4">
+						<table class="table">
+							<thead>
+								<tr>
+									<th>Parameter</th>
+									<th>Type</th>
+									<th>Description</th>
+									<th>Default</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td><code>q</code></td>
+									<td>string</td>
+									<td>Search query (matches title, description, package name)</td>
+									<td>''</td>
+								</tr>
+								<tr>
+									<td><code>severity</code></td>
+									<td>string</td>
+									<td>Filter by severity (critical, high, moderate, low)</td>
+									<td>null</td>
+								</tr>
+								<tr>
+									<td><code>ecosystem</code></td>
+									<td>string</td>
+									<td>Filter by package ecosystem</td>
+									<td>null</td>
+								</tr>
+								<tr>
+									<td><code>limit</code></td>
+									<td>number</td>
+									<td>Number of results per page</td>
+									<td>10</td>
+								</tr>
+								<tr>
+									<td><code>offset</code></td>
+									<td>number</td>
+									<td>Pagination offset</td>
+									<td>0</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+					<h4 class="h6 mb-3">Response Schema</h4>
+					<pre class="bg-light p-3 rounded mb-4"><code>{formattedSchemas.search}</code></pre>
+
+					<h4 class="h6 mb-3">Example Usage</h4>
+					<pre class="bg-light p-3 rounded"><code>curl "{currentUrl}/api/advisories/search.json?q=xss&severity=high&limit=5&offset=0"</code></pre>
+				</div>
+			</div>
+		</section>
+
+		<!-- Error Handling -->
+		<section class="mb-5">
+			<h2 class="h3 mb-4">Error Handling</h2>
+			<div class="card border-0 shadow-sm">
+				<div class="card-body p-4">
+					<p class="mb-4">All endpoints follow standard HTTP status codes and return error responses in a consistent format:</p>
+					
+					<pre class="bg-light p-3 rounded mb-4"><code>{JSON.stringify({
+						status: 'error',
+						message: 'Error description'
+					}, null, 2)}</code></pre>
+
+					<div class="table-responsive">
+						<table class="table">
+							<thead>
+								<tr>
+									<th>Status Code</th>
+									<th>Description</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td><code>200</code></td>
+									<td>Success</td>
+								</tr>
+								<tr>
+									<td><code>400</code></td>
+									<td>Bad Request - Invalid parameters</td>
+								</tr>
+								<tr>
+									<td><code>404</code></td>
+									<td>Not Found - Resource doesn't exist</td>
+								</tr>
+								<tr>
+									<td><code>500</code></td>
+									<td>Internal Server Error</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Rate Limiting -->
+		<section>
+			<h2 class="h3 mb-4">Rate Limiting</h2>
+			<div class="card border-0 shadow-sm">
+				<div class="card-body p-4">
+					<p class="mb-0">Currently, there are no rate limits on the API. However, we reserve the right to implement rate limiting in the future to ensure fair usage and system stability. We recommend implementing appropriate caching strategies in your applications.</p>
+				</div>
+			</div>
+		</section>
+	</div>
+</Layout>
+
+<style>
+	/* Code blocks */
+	pre {
+		margin: 0;
+		white-space: pre-wrap;
+	}
+
+	code {
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+		font-size: 0.9em;
+	}
+
+	/* Table styles */
+	.table {
+		font-size: 0.9rem;
+	}
+
+	.table code {
+		background-color: #f8f9fa;
+		padding: 0.2rem 0.4rem;
+		border-radius: 0.25rem;
+	}
+
+	/* Card hover effects */
+	.card {
+		transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+	}
+
+	.card:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06) !important;
+	}
+
+	/* Badge styles */
+	.badge {
+		font-weight: 500;
+		padding: 0.5em 0.75em;
+	}
+
+	/* Responsive adjustments */
+	@media (max-width: 768px) {
+		pre {
+			font-size: 0.8em;
+		}
+
+		.table {
+			font-size: 0.8rem;
+		}
+	}
+</style> 

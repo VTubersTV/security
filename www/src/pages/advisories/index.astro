@@ -1,0 +1,152 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+
+interface AdvisoryData {
+	status: string;
+	severity: string;
+	title: string;
+	description: string;
+	dates: {
+		published: Date;
+	};
+}
+
+// Get all published advisories
+const advisories = await getCollection('advisories', ({ data }: { data: AdvisoryData }) => {
+	return data.status === 'published';
+});
+
+// Sort advisories by date, newest first
+const sortedAdvisories = advisories.sort((a: CollectionEntry<'advisories'>, b: CollectionEntry<'advisories'>) => 
+	b.data.dates.published.getTime() - a.data.dates.published.getTime()
+);
+
+// Group advisories by severity
+const advisoriesBySeverity = {
+	critical: sortedAdvisories.filter(a => a.data.severity === 'critical'),
+	high: sortedAdvisories.filter(a => a.data.severity === 'high'),
+	moderate: sortedAdvisories.filter(a => a.data.severity === 'moderate'),
+	low: sortedAdvisories.filter(a => a.data.severity === 'low'),
+};
+---
+
+<Layout 
+	title="Security Advisories - VTubers.TV Security" 
+	description="Browse and search through VTubers.TV security advisories"
+>
+	<div class="container py-5">
+		<div class="row mb-4">
+			<div class="col-12">
+				<h1 class="display-4 mb-3">Security Advisories</h1>
+				<p class="lead text-muted">Browse through our published security advisories and vulnerability reports.</p>
+			</div>
+		</div>
+
+		<div class="row mb-4">
+			<div class="col-md-4">
+				<select class="form-select" id="severity-filter">
+					<option value="all">All Severities</option>
+					<option value="critical">Critical</option>
+					<option value="high">High</option>
+					<option value="moderate">Moderate</option>
+					<option value="low">Low</option>
+				</select>
+			</div>
+			<div class="col-md-4">
+				<select class="form-select" id="sort-by">
+					<option value="date-desc">Newest First</option>
+					<option value="date-asc">Oldest First</option>
+					<option value="severity">Severity</option>
+				</select>
+			</div>
+		</div>
+
+		<div class="row g-4" id="advisories-list">
+			{sortedAdvisories.map((advisory: CollectionEntry<'advisories'>) => (
+				<div class="col-md-6 col-lg-4" data-severity={advisory.data.severity}>
+					<div class="card h-100 shadow-sm">
+						<div class="card-body">
+							<div class="d-flex justify-content-between align-items-start mb-2">
+								<span class={`badge severity-${advisory.data.severity}`}>
+									{advisory.data.severity.toUpperCase()}
+								</span>
+								<small class="text-muted">
+									{new Date(advisory.data.dates.published).toLocaleDateString()}
+								</small>
+							</div>
+							<h2 class="card-title h5 mb-2">{advisory.data.title}</h2>
+							<p class="card-text text-muted small mb-3">{advisory.data.description}</p>
+							<div class="d-flex justify-content-between align-items-center">
+								<div class="small">
+									{advisory.data.identifiers.ghsa && (
+										<span class="me-2">GHSA: {advisory.data.identifiers.ghsa}</span>
+									)}
+									{advisory.data.identifiers.cve && (
+										<span>CVE: {advisory.data.identifiers.cve}</span>
+									)}
+								</div>
+								<a href={`/advisories/${advisory.slug}`} class="btn btn-sm btn-outline-primary">
+									Read More
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			))}
+		</div>
+	</div>
+</Layout>
+
+<script>
+	document.addEventListener('DOMContentLoaded', () => {
+		const severityFilter = document.getElementById('severity-filter') as HTMLSelectElement;
+		const sortBy = document.getElementById('sort-by') as HTMLSelectElement;
+		const advisoriesList = document.getElementById('advisories-list');
+
+		if (!severityFilter || !sortBy || !advisoriesList) return;
+
+		const sortAdvisories = (sortValue: string) => {
+			const cards = Array.from(advisoriesList.children) as HTMLElement[];
+			cards.sort((a, b) => {
+				const severityA = a.dataset.severity || '';
+				const severityB = b.dataset.severity || '';
+				const dateA = new Date(a.querySelector('small')?.textContent || '').getTime();
+				const dateB = new Date(b.querySelector('small')?.textContent || '').getTime();
+
+				switch (sortValue) {
+					case 'date-desc':
+						return dateB - dateA;
+					case 'date-asc':
+						return dateA - dateB;
+					case 'severity':
+						const severityOrder = { critical: 0, high: 1, moderate: 2, low: 3 };
+						return (severityOrder[severityA as keyof typeof severityOrder] || 0) - 
+							(severityOrder[severityB as keyof typeof severityOrder] || 0);
+					default:
+						return 0;
+				}
+			});
+
+			cards.forEach(card => advisoriesList.appendChild(card));
+		};
+
+		const filterAndSort = () => {
+			const selectedSeverity = severityFilter.value;
+			const sortValue = sortBy.value;
+			const cards = advisoriesList.getElementsByClassName('col-md-6');
+
+			Array.from(cards).forEach(card => {
+				const severity = (card as HTMLElement).dataset.severity;
+				(card as HTMLElement).style.display = 
+					selectedSeverity === 'all' || severity === selectedSeverity ? '' : 'none';
+			});
+
+			sortAdvisories(sortValue);
+		};
+
+		severityFilter.addEventListener('change', filterAndSort);
+		sortBy.addEventListener('change', filterAndSort);
+	});
+</script> 

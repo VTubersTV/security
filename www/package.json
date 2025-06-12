@@ -1,0 +1,17 @@
+{
+  "name": "www",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "node scripts/cp.js && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "sync": "astro sync"
+  },
+  "dependencies": {
+    "astro": "^5.9.2",
+    "date-fns": "^4.1.0",
+    "zod": "^3.25.63"
+  }
+}
