@@ -50,9 +50,6 @@ Vector: [CVSS-VECTOR]
 
 ## Recent Advisories
 
-| Advisory | Package | Severity | Published | Status |
-|| [GHSA-8m7p-xwjx-j97p](./GHSA-8m7p-xwjx-j97p.md) | `test` | CRITICAL | 6/12/2025 | PUBLISHED |
-----------|---------|----------|-----------|--------|
-| [GHSA-8m7p-xwjx-j97p](./GHSA-8m7p-xwjx-j97p.md) | `test` | CRITICAL | 6/12/2025 | PUBLISHED |
-| [GHSA-8m7p-xwjx-j97p](./GHSA-8m7p-xwjx-j97p.md) | `test` | CRITICAL | 6/12/2025 | PUBLISHED |
-| [GHSA-8m7p-xwjx-j97p](./GHSA-8m7p-xwjx-j97p.md) | `test` | CRITICAL | 6/12/2025 | PUBLISHED |
+| Advisory                                         | Package | Severity  | Published  | Status    |
+|--------------------------------------------------|---------|-----------|------------|-----------|
+| [GHSA-8m7p-xwjx-j97p](./GHSA-8m7p-xwjx-j97p.md)  | `test`  | CRITICAL | 6/12/2025 | PUBLISHED |
